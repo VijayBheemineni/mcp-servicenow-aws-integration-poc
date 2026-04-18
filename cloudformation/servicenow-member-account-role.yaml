@@ -1,0 +1,74 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: >-
+  Creates ServiceNow integration role in member accounts.
+  Establishes trust between the delegated account ServiceNow user
+  and the member account. Grants read-only access to Organizations,
+  Config, and Tags.
+
+Parameters:
+  DelegatedAccountId:
+    Type: String
+    MaxLength: 12
+    MinLength: 12
+    Description: Account ID where the ServiceNow IAM user lives.
+  ServiceNowUserName:
+    Type: String
+    Description: Name of the ServiceNow IAM user that will assume this role.
+  RoleName:
+    Type: String
+    Description: Name of the IAM role to create in this account.
+
+Resources:
+  ServiceNowMemberAccountRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Ref RoleName
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: !Sub arn:${AWS::Partition}:iam::${DelegatedAccountId}:user/${ServiceNowUserName}
+            Action:
+              - sts:AssumeRole
+      Path: /
+      Policies:
+        - PolicyName: ServiceNowIntegrationPolicy
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Sid: OrganizationsReadOnly
+                Effect: Allow
+                Action:
+                  - organizations:DescribeOrganization
+                  - organizations:ListAccounts
+                  - organizations:ListRoots
+                  - organizations:ListAccountsForParent
+                  - organizations:ListOrganizationalUnitsForParent
+                  - organizations:DescribeOrganizationalUnit
+                  - organizations:ListTagsForResource
+                Resource: '*'
+              - Sid: ConfigReadOnly
+                Effect: Allow
+                Action:
+                  - config:ListDiscoveredResources
+                  - config:SelectResourceConfig
+                  - config:BatchGetResourceConfig
+                Resource: '*'
+              - Sid: ConfigAggregatorReadOnly
+                Effect: Allow
+                Action:
+                  - config:DescribeConfigurationAggregators
+                  - config:SelectAggregateResourceConfig
+                  - config:BatchGetAggregateResourceConfig
+                Resource: '*'
+              - Sid: TagReadOnly
+                Effect: Allow
+                Action:
+                  - tag:GetResources
+                Resource: '*'
+
+Outputs:
+  RoleArn:
+    Description: ARN of the ServiceNow member account role
+    Value: !GetAtt ServiceNowMemberAccountRole.Arn
