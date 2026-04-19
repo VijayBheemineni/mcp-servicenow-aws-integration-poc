@@ -91,6 +91,7 @@ def create_securityhub_queue() -> str:
     """
     Create SQS queue and EventBridge rule for SecurityHub findings.
     Queue name matches the default ServiceNow system property.
+    Only HIGH and CRITICAL severity findings are forwarded.
     """
     sqs = get_client("sqs")
     events = get_client("events")
@@ -114,7 +115,16 @@ def create_securityhub_queue() -> str:
     try:
         events.put_rule(
             Name=rule_name,
-            EventPattern=json.dumps({"source": ["aws.securityhub"]}),
+            EventPattern=json.dumps({
+                "source": ["aws.securityhub"],
+                "detail": {
+                    "findings": {
+                        "Severity": {
+                            "Label": ["HIGH", "CRITICAL"]
+                        }
+                    }
+                }
+            }),
             State="ENABLED",
         )
     except ClientError as e:

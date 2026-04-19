@@ -39,6 +39,21 @@ mcp dev server.py
 
 Opens the MCP Inspector at http://localhost:6274 (port may vary).
 
+## Connect to an IDE
+
+Add below MCP server configuration:
+
+```json
+{
+  "mcpServers": {
+    "servicenow-aws": {
+      "command": "/path/to/.venv/bin/python",
+      "args": ["/path/to/server.py"]
+    }
+  }
+}
+```
+
 ## Configuration
 
 All resource names are derived from `SERVICENOW_PREFIX` in `.env`:
